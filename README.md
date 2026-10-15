@@ -69,7 +69,7 @@ Expected result: `Tests run: 22, Failures: 0, Errors: 0` and `BUILD SUCCESS`.
 ## Authentication
 Send this header with every request:
 
-    X-API-KEY: my-secret-key
+    X-API-KEY: lachu@123
 
 Missing or wrong key returns `401 Invalid API Key`.
 
@@ -102,7 +102,7 @@ Missing or wrong key returns `401 Invalid API Key`.
 Invalid input returns `400 Bad Request`.
 
 ## Quick check in Postman
-Add the header `X-API-KEY: my-secret-key`, then try:
+Add the header `X-API-KEY: lachu@123`, then try:
 
 | Request | Expected |
 |---------|----------|
@@ -130,4 +130,4 @@ All values have defaults. Change them with environment variables only if needed.
 - **Access denied for user 'root'**: set `DB_PASSWORD` (step 3).
 - **Unknown database 'inventory_db'**: run `schema.sql` first (step 2).
 - **Port 8080 already in use**: stop the other app running on port 8080.
-- **401 Invalid API Key**: add the header `X-API-KEY: my-secret-key`.
+- **401 Invalid API Key**: add the header `X-API-KEY: lachu@123`.
