@@ -1,91 +1,134 @@
 # Inventory Management REST API
 
-Spring Boot REST API for CRUD operations on inventory items, with validation,
+Spring Boot REST API for managing inventory items (CRUD), with validation,
 API key security, pagination/sorting and unit tests.
 
 **Tech:** Java 17, Spring Boot, Spring Data JPA, MySQL, Spring Security (API key filter),
 Bean Validation, JUnit 5 + MockMvc, Maven
 
-## Quick Start
+## Requirements
+- Java 17 or higher
+- MySQL 8 (with MySQL Workbench or the `mysql` command line)
+- Postman (or curl) to try the API
 
-**Requirements:** Java 17 and MySQL 8 (Maven is NOT needed, the project includes the Maven wrapper)
+Maven is **not** required. The project includes the Maven wrapper (`mvnw`).
 
-1. **Create the database, table and 30 sample items**
-   - MySQL Workbench: open `schema.sql` and click Run, or
-   - Command line: `mysql -u root -p < schema.sql`
-2. **Set your MySQL password** (only needed if your root user has a password).
-   Windows PowerShell:
+## Setup (4 steps)
 
-       $env:DB_PASSWORD="your_mysql_password"
+**1. Clone the project**
 
-   Mac/Linux:
+    git clone https://github.com/thelachu/Inventory-Management-REST-API.git
+    cd Inventory-Management-REST-API
 
-       export DB_PASSWORD=your_mysql_password
+**2. Create the database**
 
-3. **Start the app**
+Run `schema.sql` in MySQL. It creates the database `inventory_db`, the `items` table
+and inserts 30 sample items.
 
-   Windows: `.\mvnw.cmd spring-boot:run`
-   Mac/Linux: `./mvnw spring-boot:run`
+- MySQL Workbench: File > Open SQL Script > `schema.sql` > click the lightning icon (Run)
+- or command line: `mysql -u root -p < schema.sql`
 
-   App runs on http://localhost:8080
+**3. Set your MySQL password**
 
-4. **Try it** (default API key is `my-secret-key`):
+The password is never stored in the code. Set it as an environment variable
+(skip this if your MySQL root user has no password).
 
-       curl http://localhost:8080/items -H "X-API-KEY: my-secret-key"
+Windows PowerShell:
 
-## Configuration (optional)
-All values have defaults, so only change what you need
-(environment variables, or edit `src/main/resources/application.properties`):
+    $env:DB_PASSWORD="your_mysql_password"
 
-| Variable | Meaning | Default |
-|----------|---------|---------|
-| DB_URL | JDBC url | jdbc:mysql://localhost:3306/inventory_db |
-| DB_USERNAME | MySQL user | root |
-| DB_PASSWORD | MySQL password | (empty) |
-| INVENTORY_API_KEY | API key | my-secret-key |
+Mac / Linux:
+
+    export DB_PASSWORD=your_mysql_password
+
+**4. Start the application**
+
+Windows:
+
+    .\mvnw.cmd spring-boot:run
+
+Mac / Linux:
+
+    ./mvnw spring-boot:run
+
+The API runs at **http://localhost:8080**.
+
+## Run the tests
+No database is needed for the tests.
+
+Windows: `.\mvnw.cmd clean test`
+Mac / Linux: `./mvnw clean test`
+
+Expected result: `Tests run: 22, Failures: 0, Errors: 0` and `BUILD SUCCESS`.
+
+| Test class | What it covers |
+|------------|----------------|
+| `ItemControllerTest` | All endpoints and validation rules (service is mocked) |
+| `ApiKeySecurityTest` | API key filter: missing/wrong key returns 401, correct key passes |
 
 ## Authentication
-Every request must send the header `X-API-KEY: <key>`.
+Send this header with every request:
+
+    X-API-KEY: my-secret-key
+
 Missing or wrong key returns `401 Invalid API Key`.
 
 ## Endpoints
-| Method | URL | Description |
-|--------|-----|-------------|
-| POST   | /items | Create item (201) |
-| GET    | /items | Get all items |
-| GET    | /items/pagination?page=0&size=5&sort=id,asc | Paginated + sorted list |
-| GET    | /items/{id} | Get item by id (404 if not found) |
-| PUT    | /items/{id} | Update item |
-| DELETE | /items/{id} | Delete item (204) |
 
-**Validation:** `name` required (max 100), `description` max 500,
-`quantity` required and >= 0, `price` required, > 0, max 2 decimals.
+| Method | URL | Description | Success |
+|--------|-----|-------------|---------|
+| POST | `/items` | Create an item | 201 |
+| GET | `/items` | Get all items | 200 |
+| GET | `/items/pagination?page=0&size=5&sort=id,asc` | Paginated and sorted list | 200 |
+| GET | `/items/{id}` | Get one item (404 if not found) | 200 |
+| PUT | `/items/{id}` | Update an item | 200 |
+| DELETE | `/items/{id}` | Delete an item | 204 |
+
+**Sample request body (POST / PUT):**
+
+    {
+      "name": "Keyboard",
+      "description": "Mechanical keyboard",
+      "quantity": 10,
+      "price": 499.99
+    }
+
+**Validation rules:**
+- `name`: required, max 100 characters
+- `description`: max 500 characters
+- `quantity`: required, 0 or more
+- `price`: required, greater than 0, max 2 decimal places
+
 Invalid input returns `400 Bad Request`.
 
-## Sample requests
+## Quick check in Postman
+Add the header `X-API-KEY: my-secret-key`, then try:
 
-    curl -X POST http://localhost:8080/items \
-      -H "Content-Type: application/json" -H "X-API-KEY: my-secret-key" \
-      -d '{"name":"Keyboard","description":"Mechanical","quantity":10,"price":499.99}'
+| Request | Expected |
+|---------|----------|
+| GET `/items` | 200, 30 items |
+| GET `/items/pagination?page=0&size=5&sort=id,asc` | 200, 5 items |
+| GET `/items/1` | 200 |
+| GET `/items/999` | 404 |
+| POST with a valid body | 201 |
+| POST with blank name or quantity -1 | 400 |
+| PUT `/items/1` with a valid body | 200 |
+| DELETE `/items/1` | 204 |
+| GET `/items` without the header | 401 |
 
-    curl "http://localhost:8080/items/pagination?page=0&size=5&sort=id,asc" \
-      -H "X-API-KEY: my-secret-key"
+## Configuration (optional)
+All values have defaults. Change them with environment variables only if needed.
 
-    curl http://localhost:8080/items/1 -H "X-API-KEY: my-secret-key"
-
-## Run tests (no database needed)
-
-    ./mvnw test        (Windows: .\mvnw.cmd test)
-
-- `ItemControllerTest`: endpoints and validation (service mocked)
-- `ApiKeySecurityTest`: API key filter (401 / 200)
-
-## Database
-`schema.sql` creates database `inventory_db`, table `items`, and inserts 30 sample items.
-Running it again resets the table to the sample data.
+| Variable | Meaning | Default |
+|----------|---------|---------|
+| `DB_URL` | JDBC URL | `jdbc:mysql://localhost:3306/inventory_db` |
+| `DB_USERNAME` | MySQL user | `root` |
+| `DB_PASSWORD` | MySQL password | (empty) |
+| `INVENTORY_API_KEY` | API key | `my-secret-key` |
 
 ## Troubleshooting
-- **Access denied for user 'root'**: set `DB_PASSWORD` (step 2).
-- **Unknown database**: run `schema.sql` first (step 1).
-- **401 Invalid API Key**: add header `X-API-KEY: my-secret-key`.
+- **Access denied for user 'root'**: set `DB_PASSWORD` (step 3).
+- **Unknown database 'inventory_db'**: run `schema.sql` first (step 2).
+- **Port 8080 already in use**: stop the other app running on port 8080.
+- **401 Invalid API Key**: add the header `X-API-KEY: my-secret-key`.
 -
