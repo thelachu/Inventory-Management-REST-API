@@ -124,11 +124,10 @@ All values have defaults. Change them with environment variables only if needed.
 | `DB_URL` | JDBC URL | `jdbc:mysql://localhost:3306/inventory_db` |
 | `DB_USERNAME` | MySQL user | `root` |
 | `DB_PASSWORD` | MySQL password | (empty) |
-| `INVENTORY_API_KEY` | API key | `my-secret-key` |
+| `INVENTORY_API_KEY` | API key | `lachu@123` |
 
 ## Troubleshooting
 - **Access denied for user 'root'**: set `DB_PASSWORD` (step 3).
 - **Unknown database 'inventory_db'**: run `schema.sql` first (step 2).
 - **Port 8080 already in use**: stop the other app running on port 8080.
 - **401 Invalid API Key**: add the header `X-API-KEY: my-secret-key`.
--
